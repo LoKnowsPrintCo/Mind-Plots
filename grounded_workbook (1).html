@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grounded — A Gentle Stress Relief Experience</title>
+<style>
+  :root {
+    --cream: #F5F2EA;
+    --olive-dark: #3D4A2E;
+    --olive-mid: #6B7A4E;
+    --olive-light: #8A9A64;
+    --tan: #C4B99A;
+    --tan-light: #DDD4C0;
+    --tan-pale: #EDE7D9;
+    --warm-white: #FAF8F3;
+    --text-dark: #2C3520;
+    --text-mid: #5C6445;
+    --text-light: #8A9070;
+    --border-warm: #D4C9B0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, 'Times New Roman', serif; background: var(--cream); }
+  .wb { background: var(--cream); min-height: 100vh; }
+  .page { display: none; padding: 2rem 2.5rem 3rem; min-height: 100vh; background: var(--cream); position: relative; }
+  .page.active { display: block; }
+  .leaf-bg { position: absolute; top: 0; left: 0; opacity: 0.18; pointer-events: none; }
+  .page-title { font-size: 2rem; font-weight: 700; color: var(--olive-dark); text-align: center; margin-bottom: 0.4rem; letter-spacing: -0.5px; }
+  .page-sub { font-size: 0.95rem; color: var(--text-mid); text-align: center; margin-bottom: 1.8rem; line-height: 1.6; }
+  .section-prompt { font-size: 0.88rem; color: var(--text-light); font-style: italic; margin-bottom: 0.5rem; letter-spacing: 0.3px; }
+  .nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2.5rem; background: var(--warm-white); border-bottom: 1px solid var(--border-warm); position: sticky; top: 0; z-index: 100; }
+  .nav-dots { display: flex; gap: 6px; }
+  .nav-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tan-light); cursor: pointer; transition: all 0.3s; border: none; }
+  .nav-dot.active { background: var(--olive-mid); transform: scale(1.3); }
+  .nav-btn { background: none; border: 1px solid var(--border-warm); color: var(--text-mid); padding: 7px 18px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: Georgia, serif; transition: all 0.2s; }
+  .nav-btn:hover { background: var(--tan-pale); border-color: var(--olive-light); }
+  .nav-label { font-size: 0.8rem; color: var(--text-light); letter-spacing: 1px; text-transform: uppercase; }
+  .stress-track { position: relative; margin: 1.2rem 0 0.5rem; }
+  .stress-labels { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-light); margin-bottom: 4px; }
+  .stress-slider { width: 100%; -webkit-appearance: none; height: 6px; border-radius: 3px; background: linear-gradient(to right, #8A9A64 0%, #C4B99A 50%, #C4845A 100%); outline: none; cursor: pointer; }
+  .stress-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--warm-white); border: 2px solid var(--olive-mid); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+  .stress-num { text-align: center; font-size: 1.8rem; font-weight: 700; color: var(--olive-dark); margin-top: 6px; }
+  .stress-word { text-align: center; font-size: 0.85rem; color: var(--text-mid); font-style: italic; margin-top: 2px; }
+  .body-map-wrap { display: flex; justify-content: center; align-items: flex-start; gap: 1.5rem; margin: 1rem 0; flex-wrap: wrap; }
+  .body-labels-left, .body-labels-right { display: flex; flex-direction: column; gap: 2.2rem; padding-top: 2.5rem; }
+  .body-label { font-size: 0.82rem; color: var(--text-mid); cursor: pointer; padding: 4px 8px; border-radius: 6px; border: 1px solid transparent; transition: all 0.2s; max-width: 140px; }
+  .body-label:hover { background: var(--tan-pale); border-color: var(--tan); }
+  .body-label.active { background: var(--tan-pale); border-color: var(--olive-light); color: var(--olive-dark); font-weight: 600; }
+  .body-label strong { display: block; font-size: 0.88rem; color: var(--olive-dark); }
+  .body-fig { position: relative; }
+  .body-svg-wrap { cursor: crosshair; }
+  .mark-dot { fill: rgba(107,122,78,0.6); stroke: var(--olive-dark); stroke-width: 1.5; pointer-events: none; }
+  .breath-cards { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .breath-card { flex: 1; min-width: 140px; background: var(--warm-white); border: 1.5px solid var(--border-warm); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.25s; }
+  .breath-card:hover { border-color: var(--olive-light); }
+  .breath-card.selected { border-color: var(--olive-mid); background: var(--tan-pale); }
+  .breath-card h3 { font-size: 0.95rem; color: var(--olive-dark); margin-bottom: 4px; }
+  .breath-card p { font-size: 0.78rem; color: var(--text-light); line-height: 1.4; }
+  .breath-animate { display: flex; justify-content: center; align-items: center; height: 160px; margin: 1rem 0; }
+  .breath-circle { width: 80px; height: 80px; border-radius: 50%; background: var(--tan-pale); border: 2px solid var(--olive-light); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-mid); transition: transform 0.1s; }
+  .breath-cue { text-align: center; font-size: 1.1rem; color: var(--olive-dark); font-style: italic; margin: 0.3rem 0; min-height: 1.5rem; }
+  .breath-btn { display: block; margin: 0.8rem auto 0; background: var(--olive-mid); color: var(--warm-white); border: none; padding: 10px 28px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; font-family: Georgia, serif; transition: background 0.2s; }
+  .breath-btn:hover { background: var(--olive-dark); }
+  .sense-grid { display: flex; flex-direction: column; gap: 0.8rem; }
+  .sense-row { display: flex; align-items: flex-start; gap: 12px; background: var(--warm-white); border: 1px solid var(--border-warm); border-radius: 10px; padding: 0.8rem 1rem; transition: border-color 0.2s; }
+  .sense-row:focus-within { border-color: var(--olive-light); }
+  .sense-icon { font-size: 1.4rem; width: 32px; flex-shrink: 0; padding-top: 2px; }
+  .sense-info { flex: 1; }
+  .sense-label { font-size: 0.85rem; font-weight: 600; color: var(--olive-dark); display: flex; align-items: center; gap: 8px; }
+  .sense-num { background: var(--tan); color: var(--olive-dark); width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+  .sense-sub { font-size: 0.75rem; color: var(--text-light); margin: 2px 0 6px; font-style: italic; }
+  .sense-inputs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sense-input { border: none; border-bottom: 1px solid var(--border-warm); background: transparent; font-family: Georgia, serif; font-size: 0.82rem; color: var(--text-dark); padding: 3px 2px; width: 120px; outline: none; transition: border-color 0.2s; }
+  .sense-input:focus { border-bottom-color: var(--olive-mid); }
+  .brain-dump { width: 100%; min-height: 120px; border: 1.5px solid var(--border-warm); border-radius: 12px; background: var(--warm-white); padding: 1rem; font-family: Georgia, serif; font-size: 0.9rem; color: var(--text-dark); resize: vertical; outline: none; line-height: 1.7; transition: border-color 0.2s; }
+  .brain-dump:focus { border-color: var(--olive-mid); }
+  .sort-cols { display: flex; gap: 1rem; margin-top: 1.2rem; }
+  .sort-col { flex: 1; background: var(--warm-white); border: 1px solid var(--border-warm); border-radius: 12px; padding: 0.9rem; min-height: 160px; }
+  .sort-col h3 { font-size: 0.88rem; color: var(--olive-dark); text-align: center; margin-bottom: 0.6rem; border-bottom: 1px solid var(--border-warm); padding-bottom: 0.5rem; }
+  .sort-tag { display: inline-block; background: var(--tan-pale); border: 1px solid var(--tan); color: var(--text-dark); border-radius: 6px; padding: 3px 8px; font-size: 0.78rem; margin: 3px; cursor: grab; transition: all 0.2s; user-select: none; }
+  .sort-tag:hover { background: var(--tan-light); }
+  .sort-tag.dragging { opacity: 0.5; }
+  .sort-col.drag-over { background: var(--tan-pale); border-color: var(--olive-light); }
+  .extract-btn { background: var(--olive-light); color: var(--warm-white); border: none; padding: 7px 16px; border-radius: 16px; cursor: pointer; font-size: 0.8rem; margin: 0.7rem 0 0.3rem; font-family: Georgia, serif; }
+  .extract-btn:hover { background: var(--olive-mid); }
+  .stressor-inputs { display: flex; gap: 1rem; margin: 1rem 0 1.5rem; }
+  .stressor-box { flex: 1; text-align: center; }
+  .stressor-num { font-size: 2rem; color: var(--tan); font-weight: 700; display: block; }
+  .stressor-input { width: 100%; border: none; border-bottom: 1.5px solid var(--border-warm); background: transparent; font-family: Georgia, serif; font-size: 0.88rem; text-align: center; padding: 4px; outline: none; color: var(--text-dark); transition: border-color 0.2s; }
+  .stressor-input:focus { border-bottom-color: var(--olive-mid); }
+  .response-chips { display: flex; gap: 0.7rem; flex-wrap: wrap; margin: 1rem 0; }
+  .response-chip { border: 1.5px solid var(--border-warm); background: var(--warm-white); border-radius: 8px; padding: 0.7rem 1.1rem; cursor: pointer; font-family: Georgia, serif; font-size: 0.9rem; color: var(--text-mid); transition: all 0.2s; flex: 1; min-width: 80px; text-align: center; }
+  .response-chip:hover { border-color: var(--olive-light); }
+  .response-chip.selected { background: var(--tan-pale); border-color: var(--olive-mid); color: var(--olive-dark); font-weight: 600; }
+  .response-chip .chip-desc { display: none; font-size: 0.72rem; color: var(--text-light); margin-top: 4px; font-style: italic; font-weight: 400; }
+  .response-chip.selected .chip-desc { display: block; }
+  .reframe-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+  .reframe-col { background: var(--warm-white); border: 1px solid var(--border-warm); border-radius: 12px; padding: 1rem; }
+  .reframe-col h3 { font-size: 0.85rem; color: var(--olive-dark); margin-bottom: 0.7rem; text-align: center; }
+  .reframe-textarea { width: 100%; border: none; background: transparent; font-family: Georgia, serif; font-size: 0.85rem; line-height: 1.8; color: var(--text-dark); outline: none; resize: none; min-height: 120px; }
+  .boundary-textarea { width: 100%; min-height: 90px; border: 1.5px solid var(--border-warm); border-radius: 12px; background: var(--warm-white); padding: 0.9rem; font-family: Georgia, serif; font-size: 0.88rem; color: var(--text-dark); resize: vertical; outline: none; line-height: 1.7; }
+  .boundary-textarea:focus { border-color: var(--olive-mid); }
+  .no-builder { background: var(--tan-pale); border: 1px solid var(--tan); border-radius: 12px; padding: 1rem 1.2rem; margin-top: 0.8rem; }
+  .no-fill { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 0.88rem; color: var(--text-dark); line-height: 2; }
+  .no-blank { border: none; border-bottom: 1px solid var(--olive-mid); background: transparent; font-family: Georgia, serif; font-size: 0.88rem; color: var(--olive-dark); outline: none; min-width: 80px; text-align: center; }
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 0.8rem 0; }
+  .week-cell-head { background: var(--tan-pale); border-radius: 4px; text-align: center; font-size: 0.75rem; color: var(--text-mid); padding: 5px 2px; font-weight: 600; }
+  .week-cell { background: var(--warm-white); border: 1px solid var(--border-warm); border-radius: 6px; min-height: 52px; padding: 4px; cursor: pointer; transition: all 0.2s; font-size: 0.72rem; }
+  .week-cell:hover { border-color: var(--olive-light); }
+  .week-cell.hard { background: rgba(200,120,80,0.1); border-color: rgba(200,120,80,0.4); }
+  .week-cell.good { background: rgba(107,122,78,0.12); border-color: rgba(107,122,78,0.4); }
+  .week-emoji { font-size: 1.1rem; display: block; text-align: center; margin-top: 2px; }
+  .week-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+  .week-q { font-size: 0.82rem; color: var(--olive-dark); margin-bottom: 4px; font-weight: 600; }
+  .week-input { width: 100%; border: none; border-bottom: 1px solid var(--border-warm); background: transparent; font-family: Georgia, serif; font-size: 0.82rem; padding: 3px 0; outline: none; color: var(--text-dark); margin-bottom: 6px; }
+  .week-input:focus { border-bottom-color: var(--olive-mid); }
+  .smart-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .smart-circle { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid var(--tan); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 700; color: var(--tan); flex-shrink: 0; cursor: pointer; transition: all 0.25s; }
+  .smart-circle:hover { background: var(--tan-pale); border-color: var(--olive-mid); color: var(--olive-dark); }
+  .smart-circle.done { background: var(--tan-pale); border-color: var(--olive-mid); color: var(--olive-dark); }
+  .smart-label { width: 90px; font-size: 0.85rem; color: var(--text-mid); flex-shrink: 0; }
+  .smart-input { flex: 1; border: none; border-bottom: 1.5px solid var(--border-warm); background: transparent; font-family: Georgia, serif; font-size: 0.88rem; padding: 5px 2px; outline: none; color: var(--text-dark); transition: border-color 0.2s; }
+  .smart-input:focus { border-bottom-color: var(--olive-mid); }
+  .smart-connector { width: 2px; background: var(--tan-light); height: 20px; margin: 0 0 0 25px; }
+  .compassion-brain { position: relative; display: flex; justify-content: center; align-items: center; min-height: 260px; margin: 1rem 0; }
+  .affirmation-card { background: var(--warm-white); border: 1.5px solid var(--tan); border-radius: 14px; padding: 1.5rem 2rem; text-align: center; max-width: 260px; position: relative; z-index: 2; }
+  .affirmation-text { font-size: 1.2rem; color: var(--tan); line-height: 1.6; font-style: italic; min-height: 80px; transition: opacity 0.4s; }
+  .affirmation-btn { background: none; border: 1px solid var(--tan); color: var(--text-mid); padding: 6px 16px; border-radius: 14px; cursor: pointer; font-size: 0.8rem; margin-top: 0.8rem; font-family: Georgia, serif; }
+  .affirmation-btn:hover { background: var(--tan-pale); }
+  .affirmation-write { width: 100%; border: none; border-bottom: 1.5px solid var(--border-warm); background: transparent; font-family: Georgia, serif; font-size: 0.9rem; font-style: italic; text-align: center; padding: 6px 0; outline: none; color: var(--olive-dark); }
+  .affirmation-write:focus { border-bottom-color: var(--olive-mid); }
+  .brain-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+  .cover-page { background: var(--cream); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 2.5rem; text-align: center; }
+  .cover-title { font-size: 3.2rem; font-weight: 700; color: var(--olive-dark); letter-spacing: -1px; margin: 1.5rem 0 0.5rem; }
+  .cover-sub { font-size: 1.1rem; color: var(--text-mid); line-height: 1.7; margin-bottom: 0.5rem; }
+  .cover-tagline { display: flex; gap: 2rem; margin: 2rem 0; font-size: 0.85rem; color: var(--text-light); letter-spacing: 1px; }
+  .start-btn { background: var(--olive-mid); color: var(--warm-white); border: none; padding: 14px 40px; border-radius: 30px; font-size: 1rem; font-family: Georgia, serif; cursor: pointer; margin-top: 1rem; transition: background 0.2s; letter-spacing: 0.5px; }
+  .start-btn:hover { background: var(--olive-dark); }
+  .cover-note { font-size: 0.8rem; color: var(--text-light); margin-top: 1rem; max-width: 340px; line-height: 1.6; }
+  .intro-bullet { display: flex; align-items: flex-start; gap: 12px; margin: 0.6rem 0; padding: 0.5rem; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+  .intro-bullet:hover { background: var(--tan-pale); }
+  .intro-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--olive-light); margin-top: 6px; flex-shrink: 0; }
+  .intro-text { font-size: 0.9rem; color: var(--text-mid); line-height: 1.6; }
+  .intro-quote { background: var(--tan-pale); border-left: 3px solid var(--olive-light); padding: 1rem 1.2rem; border-radius: 0 10px 10px 0; margin: 1.2rem 0; font-style: italic; font-size: 0.9rem; color: var(--text-mid); line-height: 1.7; }
+  .progress-bar { height: 3px; background: var(--tan-light); position: relative; }
+  .progress-fill { height: 100%; background: var(--olive-mid); transition: width 0.4s; }
+  .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 1rem 0; }
+  .name-card { background: var(--warm-white); border: 1px solid var(--border-warm); border-radius: 10px; padding: 0.8rem; transition: border-color 0.2s; }
+  .name-card:focus-within { border-color: var(--olive-light); }
+  .name-card strong { font-size: 0.82rem; color: var(--olive-dark); display: block; margin-bottom: 4px; }
+  .name-card span { font-size: 0.76rem; color: var(--text-light); display: block; margin-bottom: 6px; font-style: italic; }
+  .name-card input { width: 100%; border: none; border-bottom: 1px solid var(--border-warm); background: transparent; font-family: Georgia, serif; font-size: 0.82rem; outline: none; padding: 3px 0; color: var(--text-dark); }
+  .name-card input:focus { border-bottom-color: var(--olive-mid); }
+  .page-footer { font-size: 0.72rem; color: var(--text-light); text-align: center; margin-top: 2.5rem; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+<div class="wb">
+  <div id="cover" class="cover-page">
+    <svg width="160" height="120" viewBox="0 0 160 120" fill="none">
+      <path d="M20 10 Q60 5 80 40 Q95 70 70 95 Q50 115 30 100 Q5 85 10 55 Q15 25 20 10Z" fill="#6B7A4E" opacity="0.25"/>
+      <path d="M30 15 Q65 8 85 45 Q100 75 75 100 Q55 118 35 105 Q8 90 12 58 Q18 28 30 15Z" fill="none" stroke="#6B7A4E" stroke-width="1" opacity="0.4"/>
+      <line x1="55" y1="20" x2="40" y2="85" stroke="#6B7A4E" stroke-width="0.8" opacity="0.3"/>
+      <line x1="70" y1="25" x2="50" y2="88" stroke="#6B7A4E" stroke-width="0.8" opacity="0.3"/>
+      <line x1="82" y1="38" x2="60" y2="92" stroke="#6B7A4E" stroke-width="0.8" opacity="0.3"/>
+    </svg>
+    <div style="font-size:0.78rem;color:var(--olive-light);letter-spacing:2px;text-transform:uppercase;margin-bottom:0.3rem;">Lo Knows</div>
+    <div class="cover-title">Grounded</div>
+    <div class="cover-sub" style="max-width:320px;">A gentle stress relief experience<br>designed for the way your mind works.</div>
+    <div class="cover-tagline">
+      <span>Calm your mind.</span>
+      <span>Create space.</span>
+      <span>Trust yourself.</span>
+    </div>
+    <button class="start-btn" onclick="goTo(1)">Begin when ready →</button>
+    <div class="cover-note">There is no right way to use these pages. Start anywhere. Skip anything. Return whenever you need.</div>
+  </div>
+
+  <div id="workbook" style="display:none;">
+    <div class="nav">
+      <button class="nav-btn" id="prev-btn" onclick="changePage(-1)">← Back</button>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div class="nav-dots" id="nav-dots"></div>
+        <div class="nav-label" id="nav-label">page 1 of 10</div>
+      </div>
+      <button class="nav-btn" id="next-btn" onclick="changePage(1)">Next →</button>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+
+    <!-- Page 1: How to Begin -->
+    <div class="page active" id="p1">
+      <svg class="leaf-bg" width="180" height="150" viewBox="0 0 180 150">
+        <path d="M10 5 Q70 2 100 50 Q120 90 90 125 Q65 148 40 130 Q5 110 8 72 Q12 32 10 5Z" fill="#6B7A4E"/>
+        <line x1="55" y1="15" x2="38" y2="110" stroke="#FAF8F3" stroke-width="1.2" opacity="0.6"/>
+        <line x1="75" y1="20" x2="55" y2="115" stroke="#FAF8F3" stroke-width="1" opacity="0.5"/>
+        <line x1="92" y1="42" x2="72" y2="120" stroke="#FAF8F3" stroke-width="1" opacity="0.5"/>
+      </svg>
+      <div style="padding-top:1rem;">
+        <div style="font-size:0.85rem;color:var(--text-light);margin-bottom:1.5rem;">I'm glad you're here.</div>
+        <div class="page-title" style="text-align:left;font-size:1.6rem;">How to Begin</div>
+        <div style="font-size:0.88rem;color:var(--text-mid);margin-bottom:1.2rem;">There is no right way to use these pages.</div>
+        <div>
+          <div class="intro-bullet"><div class="intro-dot"></div><div class="intro-text">Start anywhere — your brain doesn't need permission to be curious</div></div>
+          <div class="intro-bullet"><div class="intro-dot"></div><div class="intro-text">Skip anything that doesn't feel right today</div></div>
+          <div class="intro-bullet"><div class="intro-dot"></div><div class="intro-text">Move at your own pace — slow is not behind</div></div>
+          <div class="intro-bullet"><div class="intro-dot"></div><div class="intro-text">Return to what feels useful, as many times as you need</div></div>
+          <div class="intro-bullet"><div class="intro-dot"></div><div class="intro-text">This experience resets — it's always here for you</div></div>
+        </div>
+        <div class="intro-quote">These tools are designed to support reflection, calm, and clarity — not to replace therapy, counseling, or medical care. Consider these pages a safe place to look inward.</div>
+        <div style="font-size:0.9rem;color:var(--text-mid);margin-top:1rem;">I'm rooting for you.</div>
+        <div style="margin-top:1.5rem;text-align:center;">
+          <button class="start-btn" onclick="changePage(1)">Let's begin →</button>
+        </div>
+      </div>
+      <div class="page-footer">Lo Knows Print Co</div>
+    </div>
+
+    <!-- Page 2: Name What's Present -->
+    <div class="page" id="p2">
+      <svg class="leaf-bg" width="180" height="150" viewBox="0 0 180 150">
+        <path d="M10 5 Q70 2 100 50 Q120 90 90 125 Q65 148 40 130 Q5 110 8 72 Q12 32 10 5Z" fill="#6B7A4E"/>
+        <line x1="55" y1="15" x2="38" y2="110" stroke="#FAF8F3" stroke-width="1.2" opacity="0.6"/>
+      </svg>
+      <div style="padding-top:1rem;">
+        <div class="page-title">Name What's Present</div>
+        <div class="page-sub">Before anything else — just notice.</div>
+        <div class="section-prompt">Drag the marker to your current stress level:</div>
+        <div class="stress-track">
+          <div class="stress-labels"><span>calm</span><span>overwhelmed</span></div>
+          <input type="range" min="1" max="10" value="5" class="stress-slider" id="stress1" oninput="updateStress(1)">
+          <div class="stress-num" id="stress1-num">5</div>
+          <div class="stress-word" id="stress1-word">somewhere in the middle</div>
+        </div>
+        <div style="margin-top:1.5rem;">
+          <div style="font-size:0.9rem;color:var(--olive-dark);font-weight:600;text-align:center;margin-bottom:0.3rem;">Where do you feel it in your body?</div>
+          <div class="section-prompt" style="text-align:center;">Tap the areas that are activated right now</div>
+          <div class="body-map-wrap">
+            <div class="body-labels-left">
+              <div class="body-label" id="bl-head" onclick="toggleBodyLabel('head')"><strong>Head</strong>Flushed or headache?</div>
+              <div class="body-label" id="bl-chest" onclick="toggleBodyLabel('chest')"><strong>Chest</strong>Tight or racing?</div>
+              <div class="body-label" id="bl-hands" onclick="toggleBodyLabel('hands')"><strong>Hands</strong>Clenched or sweaty?</div>
+            </div>
+            <div class="body-fig">
+              <svg width="110" height="220" viewBox="0 0 110 220" class="body-svg-wrap" id="body-svg" onclick="addBodyMark(event)">
+                <ellipse cx="55" cy="28" rx="20" ry="24" fill="#DDD4C0" opacity="0.7"/>
+                <rect x="35" y="52" width="40" height="60" rx="8" fill="#DDD4C0" opacity="0.7"/>
+                <rect x="18" y="54" width="16" height="50" rx="7" fill="#DDD4C0" opacity="0.65"/>
+                <rect x="76" y="54" width="16" height="50" rx="7" fill="#DDD4C0" opacity="0.65"/>
+                <rect x="38" y="112" width="17" height="65" rx="7" fill="#DDD4C0" opacity="0.7"/>
+                <rect x="55" y="112" width="17" height="65" rx="7" fill="#DDD4C0" opacity="0.7"/>
+                <rect x="30" y="176" width="18" height="30" rx="6" fill="#DDD4C0" opacity="0.65"/>
+                <rect x="62" y="176" width="18" height="30" rx="6" fill="#DDD4C0" opacity="0.65"/>
+                <g id="body-marks"></g>
+              </svg>
+            </div>
+            <div class="body-labels-right">
+              <div class="body-label" id="bl-mouth" onclick="toggleBodyLabel('mouth')"><strong>Mouth</strong>Clenching or talking?</div>
+              <div class="body-label" id="bl-stomach" onclick="toggleBodyLabel('stomach')"><strong>Stomach</strong>Sick or in knots?</div>
+              <div class="body-label" id="bl-legs" onclick="toggleBodyLabel('legs')"><strong>Legs</strong>Restless or pacing?</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:1rem;">
+          <div class="section-prompt">The main stressor, in one sentence:</div>
+          <textarea class="brain-dump" style="min-height:56px;" placeholder="Right now I'm carrying..."></textarea>
+        </div>
+      </div>
+      <div class="page-footer">Lo Knows Print Co</div>
+    </div>
+
+    <!-- Page 3: Release -->
+    <div class="page" id="p3">
+      <svg class="leaf-bg" width="180" height="150" viewBox="0 0 180 150">
+        <path d="M10 5 Q70 2 100 50 Q120 90 90 125 Q65 148 40 130 Q5 110 8 72 Q12 32 10 5Z" fill="#6B7A4E"/>
+      </svg>
+      <div style="padding-top:1rem;">
+        <div class="page-title">Release</div>
+        <div class="page-sub">Choose a breath. Do it once. Then move on.</div>
+        <div class="breath-cards">
+          <div class="breath-card" id="bc-box" onclick="selectBreath('box')"><h3>Box Breathing</h3><p>Inhale 4 · Hold 4 · Exhale 4 · Hold 4</p></div>
+          <div class="breath-card" id="bc-diaphragm" onclick="selectBreath('diaphragm')"><h3>Diaphragmatic</h3><p>Breathe deep into the belly, not the chest</p></div>
+          <div class="breath-card" id="bc-nostril" onclick="selectBreath('nostril')"><h3>Alternate Nostril</h3><p>Close one · inhale · switch · exhale</p></div>
+        </div>
+        <div class="breath-animate">
+          <div id="breath-circle" class="breath-circle">tap →</div>
+        </div>
+        <div class="breath-cue" id="breath-cue"></div>
+        <button class="breath-btn" onclick="startBreath()">Begin breath cycle</button>
+        <div style="margin-top:1.8rem;">
+          <div class="page-title" style="font-size:1.3rem;margin-bottom:0.3rem;">Grounding — 5 · 4 · 3 · 2 · 1</div>
+          <div class="page-sub" style="margin-bottom:0.8rem;">Connect with this moment by exploring your senses.</div>
+          <div class="sense-grid">
+            <div class="sense-row"><div class="sense-icon">👁</div><div class="sense-info"><div class="sense-label"><span class="sense-num">5</span> See</div><div class="sense-sub">Look slowly left to right — what catches your eye?</div><div class="sense-inputs"><input class="sense-input" placeholder="1."><input class="sense-input" placeholder="2."><input class="sense-input" placeholder="3."><input class="sense-input" placeholder="4."><input class="sense-input" placeholder="5."></div></div></div>
+            <div class="sense-row"><div class="sense-icon">✋</div><div class="sense-info"><div class="sense-label"><span class="sense-num">4</span> Touch</div><div class="sense-sub">Press your fingertips together. What can you feel?</div><div class="sense-inputs"><input class="sense-input" placeholder="1."><input class="sense-input" placeholder="2."><input class="sense-input" placeholder="3."><input class="sense-input" placeholder="4."></div></div></div>
+            <div class="sense-row"><div class="sense-icon">👂</div><div class="sense-info"><div class="sense-label"><span class="sense-num">3</span> Hear</div><div class="sense-sub">Close your eyes. Listen. What do you notice?</div><div class="sense-inputs"><input class="sense-input" placeholder="1."><input class="sense-input" placeholder="2."><input class="sense-input" placeholder="3."></div></div></div>
+            <div class="sense-row"><div class="sense-icon">👃</div><div class="sense-info"><div class="sense-label"><span class="sense-num">2</span> Smell</div><div class="sense-sub">Take a slow breath in through your nose</div><div class="sense-inputs"><input class="sense-input" placeholder="1."><input class="sense-input" placeholder="2."></div></div></div>
+            <div class="sense-row"><div class="sense-icon">👅</div><div class="sense-info"><div class="sense-label"><span class="sense-num">1</span> Taste</div><div class="sense-sub">What lingers on your tongue right now?</div><div class="sense-inputs"><input class="sense-input" placeholder="1."></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="page-footer">Lo Knows Print Co</div>
+    </div>
+
+    <!-- Page 4: Let It Out -->
+    <div class="page" id="p4">
+      <svg class="leaf-bg" width="180" height="150" viewBox="0 0 180 150"><path d="M10 5 Q70 2 100 50 Q120 90 90 125 Q65 148 40 130 Q5 110 8 72 Q12 32 10 5Z" fill="#6B7A4E"/></svg>
+      <div style="padding-top:1rem;">
+        <div class="page-title">Let It Out</div>
+        <div class="page-sub">Everything you're holding. No editing. No order. Just write.</div>
+        <textarea class="brain-dump" id="brain-dump-text" placeholder="Start anywhere. Let the thoughts come. Don't filter them..." style="min-height:140px;"></textarea>
+        <button class="extract-btn" onclick="extractAndSort()">Sort these → let me assign them</button>
+        <div style="font-size:0.82rem;color:var(--text-light);text-align:center;margin:0.5rem 0 0.3rem;font-style:italic;">Drag each item to where it belongs, or tap to cycle through categories</div>
+        <div class="sort-cols">
+          <div class="sort-col" id="col-mine" ondragover="allowDrop(event)" ondrop="dropItem(event,'mine')"><h3>Mine</h3><div id="items-mine"></div></div>
+          <div class="sort-col" id="col-notmine" ondragover="allowDrop(event)" ondrop="dropItem(event,'notmine')"><h3>Not mine</h3><div id="items-notmine"></div></div>
+          <div class="sort-col" id="col-nottoday" ondragover="allowDrop(event)" ondrop="dropItem(event,'nottoday')"><h3>Not mine today</h3><div id="items-nottoday"></div></div>
+        </div>
+      </div>
+      <div class="page-footer">Lo Knows Print Co</div>
+    </div>
+
+    <!-- Page 5: Stress Patterns -->
+    <div class="page" id="p5">
+      <svg class="leaf-bg" width="180" height="150" viewBox="0 0 180 150"><path d="M10 5 Q70 2 100 50 Q120 90 90 125 Q65 148 40 130 Q5 110 8 72 Q12 32 10 5Z" fill="#6B7A4E"/></svg>
+      <div style="padding-top:1rem;">
+        <div class="page-title">Stress Patterns</div>
+        <div class="page-sub">Patterns are information, not character flaws.</div>
+        <div style="font-size:0.88rem;color:var(--text-mid);margin-bottom:0.5rem;">My top 3 stressors lately:</div>
+        <div class="stressor-inputs">
+          <div class="stressor-box"><span class="stressor-num">1</span><input class="stressor-input" placeholder="name it"></div>
+          <div class="stressor-box"><span class="stressor-num">2</span><input class="stressor-input" placeholder="name it"></div>
+          <div class="stressor-box"><span class="stressor-num">3</span><input class="stressor-input" placeholder="name it"></div>
+        </div>
+        <div style="font-size:0.88rem;color:var(--text-mid);margin:1.2rem 0 0.4rem;">My stress response — tap what feels true:</div>
+        <div style="font-size:0.76rem;color:var(--text-light);margin-bottom:0.7rem;font-style:italic;">You might recognize yourself in more than one.</div>
+        <div class="response-chips">
+          <div class="response-chip" id="rc-fight" onclick="toggleChip('fight')">Fight<div class="chip-desc">Irritable, reactive, arguing, overwhelmed outward</div></div>
+          <div class="response-chip" id="rc-flight" onclick="toggleChip('flight')">Flight<div class="chip-desc">Busying yourself, avoiding, moving, escaping</div></div>
+          <div class="response-chip" id="rc-freeze" onclick="toggleChip('freeze')">Freeze<div class="chip-desc">Paralyzed, can't start, scrolling, dissociating</div></div>
+          <div class="response-chip" id="rc-fawn" onclick="toggleChip('fawn')">Fawn<div class="chip-desc">People-pleasing, over-apologizing, shrinking</div></div>
+          <div class="response-chip" id="rc-flop" onclick="toggleChip('flop')">Flop<div class="chip-desc">Shutdown, exhausted, nothing matters mode</div></div>
+        </div>
+        <div style="margin-top:1.2rem;font-size:0.88rem;color:var(--text-mid);">What I <em>actually</em> need when this happens:</div>
+        <textarea class="brain-dump" style="min-height:80px;margin-top:0.5rem;" placeholder="Be honest with yourself here. What do you actually need — not what you think you should need?"></textarea>
+      </div>
+      <div class="page-footer">Lo Knows Print Co</div>
+    </div>
+
+    <!-- Page 6: Circle of Control -->
+    <div class="page" id="p6">
+      <svg class="leaf-bg" width="180" height="150" viewBox="0 0 180 150"><path d="M10 5 Q70 2 100 50 Q120 90 90 125 Q65 148 40 130 Q5 110 8 72 Q12 32 10 5Z" fill="#6B7A4E"/></svg>
+      <div style="padding-top:1rem;">
+        <div class="page-title">Circle of Control</div>
+        <div class="page-sub" style="max-width:400px;margin:0 auto 0.5rem;">I don't have to hold everything inside. This is what I can:</div>
+        <div style="display:flex;gap:1.5rem;justify-content:center;margin-bottom:1.2rem;flex-wrap:wrap;">
+          <div style="font-size:0.8rem;color:var(--text-mid);"><strong style="color:var(--olive-dark);">Control:</strong> what I say, do, how I react</div>
+          <div style="font-size:0.8rem;color:var(--text-mid);"><strong style="color:var(--olive-dark);">Influence:</strong> relationships, work, people</div>
+          <div style="font-size:0.8rem;color:var(--text-mid);"><strong style="color:var(--olive-dark);">Release:</strong> everything else</div>
+        </div>
+        <div class="section-prompt" style="text-align:center;">Write inside each ring.</div>
+        <div style="position:relative;width:340px;height:340px;margin:0 auto;">
+          <div style="position:absolute;top:0;left:0;width:340px;height:340px;border-radius:50%;border:1.5px solid var(--border-warm);background:rgba(245,242,234,0.15);"></div>
+          <div style="position:absolute;top:50px;left:50px;width:240px;height:240px;border-radius:50%;border:1.5px solid var(--tan);background:rgba(245,242,234,0.3);"></div>
+          <div style="position:absolute;top:110px;left:110px;width:120px;height:120px;border-radius:50%;border:2px solid var(--olive-light);background:rgba(245,242,234,0.6);"></div>
+          <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);font-size:0.7rem;color:var(--text-light);text-align:center;padding-top:8px;width:120px;font-style:italic;">outside my control or influence</div>
+          <div style="position:absolute;top:60px;left:50%;transform:translateX(-50%);width:120px;">
+            <textarea style="width:100%;border:none;background:transparent;font-family:Georgia,serif;font-size:0.74rem;color:var(--text-mid);outline:none;resize:none;text-align:center;height:60px;line-height:1.5;" placeholder="I can influence:&#10;(people, relationships)"></textarea>
+          </div>
+          <div style="position:absolute;top:118px;left:50%;transform:translateX(-50%);width:110px;">
+            <textarea style="width:100%;border:none;background:transparent;font-family:Georgia,serif;font-size:0.74rem;color:var(--olive-dark);outline:none;resize:none;text-align:center;height:80px;line-height:1.5;font-weight:600;" placeholder="I can control:&#10;(my words, reactions)"></textarea>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:0.7rem;color:var(--text-light);text-align:center;width:140px;font-style:italic;">things outside my reach</div>
+        </div>
+      </div>
+      <div class="page-footer">Lo Knows Print Co</div>
+    </div>
+
+    <!-- Page 7: Reframe -->
+    <div class="page" id="p7">
+      <svg class="leaf-bg" width="180" height="150" viewBox="0 0 180 150"><path d="M10 5 Q70 2 100 50 Q120 90 90 125 Q65 148 40 130 Q5 110 8 72 Q12 32 10 5Z" fill="#6B7A4E"/></svg>
+      <div style="padding-top:1rem;">
+        <div class="page-title">Reframe</div>
+        <div class="page-sub" style="max-width:420px;margin:0 auto 1.2rem;">We often speak to ourselves in ways we'd never speak to someone we love.</div>
+        <div style="font-size:0.85rem;color:var(--text-mid);text-align:center;margin-bottom:1rem;">Consider your current situation and feelings.<br><span style="font-style:italic;">If a loved one described this, what would you say to <em>them</em>?</span></div>
+        <div class="reframe-cols">
+          <div class="reframe-col"><h3>What I'd say to her →</h3><textarea class="reframe-textarea" id="reframe-to-her" placeholder="You've been working so hard. It makes sense that you're exhausted..."></textarea></div>
+          <div class="reframe-col" style="border-color:var(--olive-light);"><h3>Now say it to yourself</h3><textarea class="reframe-textarea" id="reframe-to-self" placeholder="Even softer. Your name, if it helps..."></textarea></div>
+        </div>
+        <div style="margin-top:0.7rem;font-size:0.78rem;color:var(--text-light);text-align:center;font-style:italic;">Notice the gap — between how you speak to her and how you speak to you.</div>
+        <button style="display:block;margin:1rem auto 0;background:none;border:1px solid var(--border-warm);color:var(--text-mid);padding:7px 18px;border-radius:16px;cursor:pointer;font-family:Georgia,serif;font-size:0.82rem;" onclick="mirrorReframe()">Mirror it for me →</button>
+      </div>
+      <div class="page-footer">Lo Knows Print Co</div>
+    </div>
+
+    <!-- Page 8: Boundaries -->
+    <div class="page" id="p8">
+      <svg class="leaf-bg" width="180" height="150" viewBox="0 0 180 150"><path d="M10 5 Q70 2 100 50 Q120 90 90 125 Q65 148 40 130 Q5 110 8 72 Q12 32 10 5Z" fill="#6B7A4E"/></svg>
+      <div style="padding-top:1rem;">
+        <div class="page-title">Boundaries</div>
+        <div class="page-sub">A boundary isn't a wall. It's a door you get to control.</div>
+        <div style="font-size:0.85rem;color:var(--text-mid);margin-bottom:0.5rem;">My greatest challenges to protecting my boundaries are:</div>
+        <textarea class="boundary-textarea" placeholder="It might be people-pleasing, guilt, fear of disappointing others, not knowing what you need..."></textarea>
+        <div style="margin-top:1.2rem;font-size:0.85rem;color:var(--text-mid);">One thing I can say no to (or delay):</div>
+        <textarea class="boundary-textarea" style="min-height:56px;margin-top:0.5rem;" placeholder="Even one small no is a complete sentence."></textarea>
+        <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-mid);">One small boundary I can set this week:</div>
+        <textarea class="boundary-textarea" style="min-height:56px;margin-top:0.5rem;" placeholder="Specific, real, and yours to keep."></textarea>
+        <div class="no-builder" style="margin-top:1.2rem;">
+          <div style="font-size:0.8rem;color:var(--text-mid);margin-bottom:0.5rem;font-style:italic;">Build your "no" — fill in the blanks:</div>
+          <div class="no-fill">
+            <span>"Thanks for asking. I'm not able to take this on. I can</span>
+            <input class="no-blank" placeholder="offer alternative" style="width:130px;">
+            <span>or</span>
+            <input class="no-blank" placeholder="timeline" style="width:110px;">
+            <span>instead."</span>
+          </div>
+        </div>
+      </div>
+      <div class="page-footer">Lo Knows Print Co</div>
+    </div>
+
+    <!-- Page 9: SMART Steps -->
+    <div class="page" id="p9">
+      <svg class="leaf-bg" width="180" height="150" viewBox="0 0 180 150"><path d="M10 5 Q70 2 100 50 Q120 90 90 125 Q65 148 40 130 Q5 110 8 72 Q12 32 10 5Z" fill="#6B7A4E"/></svg>
+      <div style="padding-top:1rem;">
+        <div class="page-title">Smart Steps</div>
+        <div class="page-sub">One micro-step. Not a plan. Just the next thing.</div>
+        <div class="section-prompt">Tap each circle when you've thought through that element:</div>
+        <div style="margin:1rem 0;">
+          <div class="smart-connector"></div>
+          <div class="smart-row"><div class="smart-circle" id="sc-s" onclick="toggleSmart('s')">S</div><div class="smart-label">Specific</div><input class="smart-input" placeholder="What exactly will I do?"></div>
+          <div class="smart-connector"></div>
+          <div class="smart-row"><div class="smart-circle" id="sc-m" onclick="toggleSmart('m')">M</div><div class="smart-label">Measurable</div><input class="smart-input" placeholder="How will I know it's done?"></div>
+          <div class="smart-connector"></div>
+          <div class="smart-row"><div class="smart-circle" id="sc-a" onclick="toggleSmart('a')">A</div><div class="smart-label">Achievable</div><input class="smart-input" placeholder="Is this realistic for today?"></div>
+          <div class="smart-connector"></div>
+          <div class="smart-row"><div class="smart-circle" id="sc-r" onclick="toggleSmart('r')">R</div><div class="smart-label">Relevant</div><input class="smart-input" placeholder="Why does this matter to me?"></div>
+          <div class="smart-connector"></div>
+          <div class="smart-row"><div class="smart-circle" id="sc-t" onclick="toggleSmart('t')">T</div><div class="smart-label">Timed</div><input class="smart-input" placeholder="When will I do it?"></div>
+          <div class="smart-connector"></div>
+        </div>
+        <div style="margin-top:0.5rem;font-size:0.88rem;color:var(--olive-dark);font-weight:600;">My next SMART step is:</div>
+        <textarea class="brain-dump" style="min-height:60px;margin-top:0.5rem;" placeholder="Write it as a complete sentence. Say it out loud if you can."></textarea>
+      </div>
+      <div class="page-footer">Lo Knows Print Co</div>
+    </div>
+
+    <!-- Page 10: Self Compassion + Weekly Reset -->
+    <div class="page" id="p10">
+      <svg class="leaf-bg" width="180" height="150" viewBox="0 0 180 150"><path d="M10 5 Q70 2 100 50 Q120 90 90 125 Q65 148 40 130 Q5 110 8 72 Q12 32 10 5Z" fill="#6B7A4E"/></svg>
+      <div style="padding-top:0.5rem;">
+        <div class="page-title" style="font-size:1.3rem;">A Moment of Self Compassion</div>
+        <div class="compassion-brain">
+          <svg class="brain-particles" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid meet">
+            <ellipse cx="200" cy="140" rx="160" ry="110" fill="none" stroke="#DDD4C0" stroke-width="1" opacity="0.5"/>
+            <circle cx="80" cy="80" r="8" fill="#DDD4C0" opacity="0.4"/>
+            <circle cx="330" cy="100" r="6" fill="#DDD4C0" opacity="0.35"/>
+            <circle cx="60" cy="170" r="10" fill="#DDD4C0" opacity="0.3"/>
+            <circle cx="350" cy="180" r="7" fill="#DDD4C0" opacity="0.4"/>
+            <circle cx="120" cy="50" r="5" fill="#DDD4C0" opacity="0.35"/>
+            <circle cx="290" cy="55" r="9" fill="#DDD4C0" opacity="0.3"/>
+            <circle cx="110" cy="220" r="7" fill="#DDD4C0" opacity="0.35"/>
+            <circle cx="300" cy="230" r="5" fill="#DDD4C0" opacity="0.4"/>
+          </svg>
+          <div class="affirmation-card">
+            <div class="affirmation-text" id="aff-text">I am allowed to be gentle with myself.</div>
+            <button class="affirmation-btn" onclick="nextAffirmation()">offer me another →</button>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:0.5rem;">
+          <div class="section-prompt">Write the one that lands:</div>
+          <input class="affirmation-write" placeholder="Write the words that feel true for you today...">
+        </div>
+        <div style="margin-top:2rem;">
+          <div class="page-title" style="font-size:1.3rem;margin-bottom:0.3rem;">Weekly Reset</div>
+          <div class="page-sub" style="margin-bottom:0.8rem;">Return to this whenever you need reflection.</div>
+          <div class="section-prompt">Stress this week:</div>
+          <div class="stress-track">
+            <div class="stress-labels"><span>calm</span><span>overwhelmed</span></div>
+            <input type="range" min="1" max="10" value="5" class="stress-slider" id="stress2" oninput="updateStress(2)">
+            <div class="stress-num" id="stress2-num">5</div>
+          </div>
+          <div class="section-prompt" style="margin-top:1rem;">How did each day feel? Tap to mark it:</div>
+          <div class="week-grid">
+            <div class="week-cell-head">Sun</div><div class="week-cell-head">Mon</div><div class="week-cell-head">Tue</div><div class="week-cell-head">Wed</div><div class="week-cell-head">Thu</div><div class="week-cell-head">Fri</div><div class="week-cell-head">Sat</div>
+            <div class="week-cell" id="wc0" onclick="cycleDay(0)"></div>
+            <div class="week-cell" id="wc1" onclick="cycleDay(1)"></div>
+            <div class="week-cell" id="wc2" onclick="cycleDay(2)"></div>
+            <div class="week-cell" id="wc3" onclick="cycleDay(3)"></div>
+            <div class="week-cell" id="wc4" onclick="cycleDay(4)"></div>
+            <div class="week-cell" id="wc5" onclick="cycleDay(5)"></div>
+            <div class="week-cell" id="wc6" onclick="cycleDay(6)"></div>
+          </div>
+          <div style="display:flex;gap:1rem;font-size:0.72rem;color:var(--text-light);margin:0.3rem 0 0.8rem;justify-content:center;">
+            <span>tap once = hard day</span><span>tap twice = good day</span><span>tap three = clear</span>
+          </div>
+          <div class="week-row3">
+            <div><div class="week-q">Which days felt hardest?</div><input class="week-input" placeholder="..."><input class="week-input" placeholder="..."></div>
+            <div><div class="week-q">What helped?</div><input class="week-input" placeholder="..."><input class="week-input" placeholder="..."></div>
+            <div><div class="week-q">What patterns can I spot?</div><input class="week-input" placeholder="..."><input class="week-input" placeholder="..."></div>
+          </div>
+          <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-mid);text-align:center;">Something I want to carry into next week:</div>
+          <textarea class="brain-dump" style="min-height:60px;margin-top:0.5rem;" placeholder="One intention. One thing. That's enough."></textarea>
+        </div>
+      </div>
+      <div class="page-footer">Lo Knows Print Co — return to this anytime.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+var currentPage=1,totalPages=10,dayStates=[0,0,0,0,0,0,0],breathSelected='box',breathInterval=null,affIdx=0;
+var affirmations=["I am allowed to be gentle with myself.","My nervous system is not broken. It learned to survive.","I can rest without earning it first.","Slowing down is not falling behind.","I am allowed to take up space.","What looks like chaos to others makes sense to me.","I have always been doing my best with what I had.","My worth is not measured by my output.","I am allowed to change my mind.","Feeling everything deeply is not a flaw.","I deserve the same care I give to everyone else."];
+function goTo(n){document.getElementById('cover').style.display='none';document.getElementById('workbook').style.display='block';currentPage=n;renderPage();}
+function renderPage(){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});var pg=document.getElementById('p'+currentPage);if(pg)pg.classList.add('active');document.getElementById('nav-label').textContent='page '+currentPage+' of '+totalPages;document.getElementById('prog').style.width=Math.round((currentPage/totalPages)*100)+'%';var dots=document.getElementById('nav-dots');dots.innerHTML='';for(var i=1;i<=totalPages;i++){var d=document.createElement('button');d.className='nav-dot'+(i===currentPage?' active':'');(function(idx){d.addEventListener('click',function(){currentPage=idx;renderPage();});})(i);dots.appendChild(d);}document.getElementById('prev-btn').style.visibility=currentPage>1?'visible':'hidden';document.getElementById('next-btn').textContent=currentPage<totalPages?'Next →':'Begin again ↺';}
+function changePage(dir){if(dir===1&&currentPage>=totalPages){currentPage=1;renderPage();return;}currentPage=Math.max(1,Math.min(totalPages,currentPage+dir));renderPage();}
+var stressWords=['','deeply calm','quiet','settling','soft','somewhere in the middle','a little tense','notable tension','high','very high','overwhelmed'];
+function updateStress(n){var v=document.getElementById('stress'+n).value;document.getElementById('stress'+n+'-num').textContent=v;if(n===1)document.getElementById('stress1-word').textContent=stressWords[v]||'';}
+function toggleBodyLabel(part){var el=document.getElementById('bl-'+part);if(el)el.classList.toggle('active');}
+function addBodyMark(e){var svg=document.getElementById('body-svg');var rect=svg.getBoundingClientRect();var x=(e.clientX-rect.left)*(110/rect.width);var y=(e.clientY-rect.top)*(220/rect.height);var marks=document.getElementById('body-marks');var c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('class','mark-dot');c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r','5');c.style.cursor='pointer';c.addEventListener('click',function(ev){ev.stopPropagation();marks.removeChild(c);});marks.appendChild(c);}
+function selectBreath(type){breathSelected=type;['box','diaphragm','nostril'].forEach(function(t){document.getElementById('bc-'+t).classList.remove('selected');});document.getElementById('bc-'+type).classList.add('selected');document.getElementById('breath-cue').textContent='';document.getElementById('breath-circle').className='breath-circle';document.getElementById('breath-circle').textContent='tap →';if(breathInterval)clearTimeout(breathInterval);}
+function startBreath(){if(breathInterval)clearTimeout(breathInterval);var circle=document.getElementById('breath-circle');var cue=document.getElementById('breath-cue');var step=0;var steps;if(breathSelected==='box'){steps=[{t:'Inhale... 1 2 3 4',cls:'inhale',dur:4000},{t:'Hold... 1 2 3 4',cls:'hold',dur:4000},{t:'Exhale... 1 2 3 4',cls:'exhale',dur:4000},{t:'Hold... 1 2 3 4',cls:'hold',dur:4000}];}else if(breathSelected==='diaphragm'){steps=[{t:'Breathe deep into the belly',cls:'inhale',dur:4000},{t:'Feel the belly rise...',cls:'hold',dur:2000},{t:'Exhale slowly and fully',cls:'exhale',dur:6000}];}else{steps=[{t:'Close right nostril. Inhale left.',cls:'inhale',dur:4000},{t:'Hold',cls:'hold',dur:2000},{t:'Switch. Exhale right.',cls:'exhale',dur:4000},{t:'Inhale right.',cls:'inhale',dur:4000},{t:'Switch. Exhale left.',cls:'exhale',dur:4000}];}function runStep(){var s=steps[step%steps.length];circle.className='breath-circle '+s.cls;circle.textContent='';cue.textContent=s.t;step++;if(step>=steps.length*2){cue.textContent='Well done. Notice how you feel.';circle.className='breath-circle';circle.textContent='done';return;}breathInterval=setTimeout(runStep,s.dur);}runStep();}
+function extractAndSort(){var text=document.getElementById('brain-dump-text').value;if(!text.trim())return;var sentences=text.split(/[.!?\n]+/).map(function(s){return s.trim();}).filter(function(s){return s.length>2;});['mine','notmine','nottoday'].forEach(function(c){document.getElementById('items-'+c).innerHTML='';});sentences.forEach(function(s,i){var cat=['mine','notmine','nottoday'][i%3];addSortTag(s,cat);});}
+function addSortTag(text,cat){var container=document.getElementById('items-'+cat);if(!container)return;var tag=document.createElement('div');tag.className='sort-tag';tag.textContent=text.length>40?text.substr(0,38)+'…':text;tag.draggable=true;tag.setAttribute('data-text',text);var cats=['mine','notmine','nottoday'];var idx=cats.indexOf(cat);tag.addEventListener('click',function(){idx=(idx+1)%3;var newCat=cats[idx];document.getElementById('items-'+newCat).appendChild(tag);});tag.addEventListener('dragstart',function(e){e.dataTransfer.setData('text',text);tag.classList.add('dragging');});tag.addEventListener('dragend',function(){tag.classList.remove('dragging');});container.appendChild(tag);}
+function allowDrop(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function dropItem(e,cat){e.preventDefault();e.currentTarget.classList.remove('drag-over');var text=e.dataTransfer.getData('text');var old=document.querySelector('.sort-tag.dragging');if(old)old.parentNode.removeChild(old);addSortTag(text,cat);}
+['mine','notmine','nottoday'].forEach(function(c){var el=document.getElementById('col-'+c);if(el){el.addEventListener('dragleave',function(){el.classList.remove('drag-over');});}});
+function toggleChip(id){var el=document.getElementById('rc-'+id);if(el)el.classList.toggle('selected');}
+function toggleSmart(l){var el=document.getElementById('sc-'+l);if(el)el.classList.toggle('done');}
+function mirrorReframe(){var her=document.getElementById('reframe-to-her').value;if(her.trim()){document.getElementById('reframe-to-self').value=her;document.getElementById('reframe-to-self').focus();}}
+function cycleDay(idx){dayStates[idx]=(dayStates[idx]+1)%3;var cell=document.getElementById('wc'+idx);cell.classList.remove('hard','good');var emojis=['','😮‍💨','🌿'];if(dayStates[idx]===1)cell.classList.add('hard');else if(dayStates[idx]===2)cell.classList.add('good');var span=cell.querySelector('.week-emoji');if(span)cell.removeChild(span);if(dayStates[idx]>0){var s=document.createElement('span');s.className='week-emoji';s.textContent=emojis[dayStates[idx]];cell.appendChild(s);}}
+function nextAffirmation(){affIdx=(affIdx+1)%affirmations.length;var el=document.getElementById('aff-text');el.style.opacity='0';setTimeout(function(){el.textContent=affirmations[affIdx];el.style.opacity='1';},300);}
+selectBreath('box');
+</script>
+</body>
+</html>
